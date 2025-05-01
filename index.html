@@ -200,6 +200,10 @@
         .disqualified {
             color: #d32f2f;
         }
+        .na-placement {
+            color: #999;
+            font-style: italic;
+        }
         .weekly-winner {
             color: #6264A7;
             font-weight: bold;
@@ -217,7 +221,7 @@
             <div class="game-description">
                 <h3>How to Play</h3>
                 <p>Roll a ball down the hall once per week to see how close you can get to the end without hitting the door. Each player gets one attempt per week. Players who hit the end wall are disqualified for that week's competition.</p>
-                <p><strong>Weekly Placements:</strong> Numbers show placement each week (1st, 2nd, 3rd, etc.) | "DQ" means disqualified for hitting the wall</p>
+                <p><strong>Weekly Placements:</strong> Numbers show placement each week (1st, 2nd, 3rd, etc.) | "DQ" means disqualified for hitting the wall | "N/A" means no attempt was made or recorded</p>
             </div>
             
             <div class="leaderboard">
@@ -272,7 +276,7 @@
             <div class="info-box">
                 <h3>About This Leaderboard</h3>
                 <p>This leaderboard is automatically updated from our Hall Ball tracking spreadsheet.</p>
-                <p>Points system: 1st place: 25pts, 2nd: 18pts, 3rd: 15pts, 4th: 12pts, 5th: 10pts, 6th: 8pts, 7th: 6pts, 8th: 4pts, 9th: 2pts, 10th+: 1pt, Disqualified: 0pts</p>
+                <p>Points system: 1st place: 25pts, 2nd: 18pts, 3rd: 15pts, 4th: 12pts, 5th: 10pts, 6th: 8pts, 7th: 6pts, 8th: 4pts, 9th: 2pts, 10th+: 1pt, Disqualified: 0pts, No attempt (N/A): 0pts</p>
             </div>
         </div>
         
@@ -304,7 +308,8 @@
             9: 2,   // 9th place: 2 points
             10: 1,  // 10th+ place: 1 point
             11: 1,  // 11th+ place: 1 point
-            'DQ': 0 // Disqualified: 0 points
+            'DQ': 0, // Disqualified: 0 points
+            'N/A': 0 // No attempt: 0 points
         };
 
         // List of potential players
@@ -316,7 +321,7 @@
             "Sydnee Sturdivant", "Meghan Tolson", "Scott Wilkinson", "Lynne Woodrum"
         ];
 
-        // FIXED: Define sample data in the global scope so it's available throughout
+        // Define sample data
         const sampleWeeklyResults = [
             { week: "Week 17", date: "2025-04-28", player: "Laura Adams", placement: 1 },
             { week: "Week 17", date: "2025-04-28", player: "Beth Broyles", placement: 2 },
@@ -331,6 +336,7 @@
             { week: "Week 17", date: "2025-04-28", player: "Mat Marietta", placement: 11 },
             { week: "Week 17", date: "2025-04-28", player: "Rose McCarthy", placement: 12 },
             { week: "Week 17", date: "2025-04-28", player: "Lynne Woodrum", placement: "DQ" },
+            { week: "Week 17", date: "2025-04-28", player: "Meghan Tolson", placement: "" },
             { week: "Week 16", date: "2025-04-21", player: "Julie Miener", placement: 1 },
             { week: "Week 16", date: "2025-04-21", player: "Kim Nehrt", placement: 2 },
             { week: "Week 16", date: "2025-04-21", player: "Arlin Peebles", placement: 3 },
@@ -341,6 +347,7 @@
             { week: "Week 16", date: "2025-04-21", player: "Scott Wilkinson", placement: 8 },
             { week: "Week 16", date: "2025-04-21", player: "Laura Adams", placement: 9 },
             { week: "Week 16", date: "2025-04-21", player: "Beth Broyles", placement: "DQ" },
+            { week: "Week 16", date: "2025-04-21", player: "Alison Maley", placement: null },
             { week: "Week 15", date: "2025-04-14", player: "Pam Burdine", placement: 1 },
             { week: "Week 15", date: "2025-04-14", player: "Adam Geisen", placement: 2 },
             { week: "Week 15", date: "2025-04-14", player: "Mari Handy", placement: 3 },
@@ -386,7 +393,7 @@
                     </tr>
                 `;
                 
-                // Use sample data for now - FIXED by ensuring sampleWeeklyResults is available
+                // Use sample data for now
                 weeklyResults = sampleWeeklyResults;
                 
                 // For when you're ready to use Sheety API:
@@ -404,6 +411,16 @@
                     weeklyResults = sampleWeeklyResults;
                 }
                 
+                
+                // Clean up the data - handle empty placement values
+                weeklyResults = weeklyResults.map(result => {
+                    // Check for empty, null, or undefined placement values
+                    if (result.placement === "" || result.placement === null || result.placement === undefined) {
+                        // Convert to "N/A" for display
+                        result.placement = "N/A";
+                    }
+                    return result;
+                });
                 
                 // Calculate player standings based on weekly results
                 const playerStandings = calculateStandings(weeklyResults);
@@ -453,7 +470,9 @@
                     
                     // Calculate points based on placement
                     let points = 0;
-                    if (placement === "DQ") {
+                    if (placement === "N/A") {
+                        points = pointsSystem['N/A']; // No attempt
+                    } else if (placement === "DQ") {
                         points = pointsSystem['DQ']; // Disqualified
                     } else if (placement <= 10) {
                         points = pointsSystem[placement];
@@ -505,6 +524,8 @@
         function formatPlacement(placement) {
             if (placement === "DQ") {
                 return "DQ";
+            } else if (placement === "N/A") {
+                return "N/A";
             }
             
             // Return just the number for the vertical bar format
@@ -535,27 +556,35 @@
                 
                 // Create placement string with vertical bars using the format: 3 | 1 | 2 | 5 |
                 let placementStr = '<span class="weekly-placements">';
-                player.placements.forEach((p, i) => {
-                    // Add each placement with appropriate styling
-                    let placementClass = '';
-                    
-                    if (p.placement === "DQ") {
-                        placementClass = 'disqualified';
-                    } else if (p.placement === 1) {
-                        placementClass = 'first-place';
-                    } else if (p.placement === 2) {
-                        placementClass = 'second-place';
-                    } else if (p.placement === 3) {
-                        placementClass = 'third-place';
-                    }
-                    
-                    placementStr += `<span class="${placementClass}" title="${p.week}">${formatPlacement(p.placement)}</span>`;
-                    
-                    // Add separator if not last item
-                    if (i < player.placements.length - 1) {
-                        placementStr += ' | ';
-                    }
-                });
+                
+                // Check if player has any placements
+                if (!player.placements || player.placements.length === 0) {
+                    placementStr += 'N/A';
+                } else {
+                    player.placements.forEach((p, i) => {
+                        // Add each placement with appropriate styling
+                        let placementClass = '';
+                        
+                        if (p.placement === "N/A") {
+                            placementClass = 'na-placement';
+                        } else if (p.placement === "DQ") {
+                            placementClass = 'disqualified';
+                        } else if (p.placement === 1) {
+                            placementClass = 'first-place';
+                        } else if (p.placement === 2) {
+                            placementClass = 'second-place';
+                        } else if (p.placement === 3) {
+                            placementClass = 'third-place';
+                        }
+                        
+                        placementStr += `<span class="${placementClass}" title="${p.week}">${formatPlacement(p.placement)}</span>`;
+                        
+                        // Add separator if not last item
+                        if (i < player.placements.length - 1) {
+                            placementStr += ' | ';
+                        }
+                    });
+                }
                 placementStr += '</span>';
                 
                 row.innerHTML = `
@@ -589,11 +618,21 @@
             // Sort players within each week by placement
             sortedWeeks.forEach(week => {
                 groupedByWeek[week].sort((a, b) => {
-                    // DQ comes after numbered placements
-                    if (a.placement === "DQ" && b.placement !== "DQ") return 1;
-                    if (a.placement !== "DQ" && b.placement === "DQ") return -1;
-                    // Otherwise sort by placement number
-                    return a.placement - b.placement;
+                    // N/A comes after everything
+                    if (a.placement === "N/A" && b.placement !== "N/A") return 1;
+                    if (a.placement !== "N/A" && b.placement === "N/A") return -1;
+                    
+                    // DQ comes after numbered placements but before N/A
+                    if (a.placement === "DQ" && !isNaN(b.placement)) return 1;
+                    if (!isNaN(a.placement) && b.placement === "DQ") return -1;
+                    
+                    // If both are numbers, sort numerically
+                    if (!isNaN(a.placement) && !isNaN(b.placement)) {
+                        return a.placement - b.placement;
+                    }
+                    
+                    // Default return if we get here
+                    return 0;
                 });
             });
             
@@ -637,9 +676,16 @@
                         row.classList.add('disqualified');
                     }
                     
+                    // Style N/A placements
+                    if (result.placement === "N/A") {
+                        row.classList.add('na-placement');
+                    }
+                    
                     // Calculate points
                     let points = 0;
-                    if (result.placement === "DQ") {
+                    if (result.placement === "N/A") {
+                        points = pointsSystem['N/A']; // No attempt
+                    } else if (result.placement === "DQ") {
                         points = pointsSystem['DQ']; // Disqualified
                     } else if (result.placement <= 10) {
                         points = pointsSystem[result.placement];
@@ -650,7 +696,7 @@
                     row.innerHTML = `
                         <td>${week}</td>
                         <td>${result.player}</td>
-                        <td class="placement">${result.placement === "DQ" ? "DQ" : result.placement}</td>
+                        <td class="placement">${formatPlacement(result.placement)}</td>
                         <td class="points">${points}</td>
                     `;
                     
