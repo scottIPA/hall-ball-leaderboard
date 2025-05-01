@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hall Ball Championship Leaderboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            color: #252423;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #6264A7;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 5px solid #464775;
+        }
+        h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 32px;
+            margin: 30px 0 15px 0;
+            color: #6264A7;
+            border-bottom: 2px solid #6264A7;
+            padding-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 24px;
+            color: #eaeaea;
+        }
+        .leaderboard {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            border-top: 5px solid #6264A7;
+        }
+        .weekly-results-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            border-top: 5px solid #4f6bed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background-color: #6264A7;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+        .rank {
+            width: 80px;
+            text-align: center;
+        }
+        .points, .placement {
+            text-align: center;
+            width: 100px;
+        }
+        .week {
+            width: 120px;
+        }
+        .name {
+            width: auto;
+        }
+        .top-player {
+            font-weight: bold;
+            color: #6264A7;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            background-color: #464775;
+            color: white;
+            padding: 20px 0;
+            font-size: 14px;
+        }
+        .last-updated {
+            font-style: italic;
+            margin-top: 20px;
+            text-align: right;
+            color: #888;
+        }
+        .medal {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .gold {
+            background-color: #ffd700;
+            color: #333;
+        }
+        .silver {
+            background-color: #c0c0c0;
+            color: #333;
+        }
+        .bronze {
+            background-color: #cd7f32;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+        .info-box {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .game-description {
+            background-color: #cce5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #b8daff;
+        }
+        /* Spinner animation */
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #6264A7;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .week-highlight {
+            font-weight: bold;
+            background-color: #e6f7ff;
+        }
+        .weekly-placements {
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .first-place {
+            color: #ffd700;
+        }
+        .second-place {
+            color: #6264A7;
+        }
+        .third-place {
+            color: #cd7f32;
+        }
+        .disqualified {
+            color: #d32f2f;
+        }
+        .weekly-winner {
+            color: #6264A7;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HALL BALL CHAMPIONSHIP</h1>
+            <div class="subtitle">Weekly Challenge 2025</div>
+        </header>
+        
+        <div id="main-view">
+            <div class="game-description">
+                <h3>How to Play</h3>
+                <p>Roll a ball down the hall once per week to see how close you can get to the end without hitting the door. Each player gets one attempt per week. Players who hit the end wall are disqualified for that week's competition.</p>
+                <p><strong>Weekly Placements:</strong> Numbers show placement each week (1st, 2nd, 3rd, etc.) | "DQ" means disqualified for hitting the wall</p>
+            </div>
+            
+            <div class="leaderboard">
+                <h2>Tournament Standings</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="rank">Rank</th>
+                            <th class="name">Player</th>
+                            <th class="points">Total Points</th>
+                            <th>Weekly Placements</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTableBody">
+                        <tr>
+                            <td colspan="4" class="loading">
+                                <div class="spinner"></div>
+                                <p>Loading leaderboard data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="last-updated">Last updated: <span id="lastUpdated">Loading...</span></div>
+            </div>
+            
+            <div class="weekly-results-container">
+                <h2>Weekly Results</h2>
+                <div class="weekly-results">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="week">Week</th>
+                                <th class="name">Player</th>
+                                <th class="placement">Placement</th>
+                                <th class="points">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyResultsTableBody">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Loading weekly results...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Information Box -->
+            <div class="info-box">
+                <h3>About This Leaderboard</h3>
+                <p>This leaderboard is automatically updated from our Hall Ball tracking spreadsheet.</p>
+                <p>Points system: 1st place: 25pts, 2nd: 18pts, 3rd: 15pts, 4th: 12pts, 5th: 10pts, 6th: 8pts, 7th: 6pts, 8th: 4pts, 9th: 2pts, 10th+: 1pt, Disqualified: 0pts</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Hall Ball Championship — © 2025 Office Fun Committee</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration - replace these with your own Sheety API URLs
+        const config = {
+            // Replace these with your own Sheety API URLs after setting up your spreadsheet
+            weeklyResultsApiUrl: 'https://api.sheety.co/421ea0f34197af43f9c53150d5dbf197/hallBallLeaderboard/weeklyResults',
+            
+            // Refresh interval in milliseconds (5 minutes)
+            refreshInterval: 5 * 60 * 1000
+        };
+
+        // Points system
+        const pointsSystem = {
+            1: 25,  // 1st place: 25 points
+            2: 18,  // 2nd place: 18 points
+            3: 15,  // 3rd place: 15 points
+            4: 12,  // 4th place: 12 points
+            5: 10,  // 5th place: 10 points
+            6: 8,   // 6th place: 8 points
+            7: 6,   // 7th place: 6 points
+            8: 4,   // 8th place: 4 points
+            9: 2,   // 9th place: 2 points
+            10: 1,  // 10th+ place: 1 point
+            11: 1,  // 11th+ place: 1 point
+            'DQ': 0 // Disqualified: 0 points
+        };
+
+        // List of potential players
+        const potentialPlayers = [
+            "Laura Adams", "Beth Broyles", "Pam Burdine", "Adam Geisen", "Mari Handy",
+            "Dave Heinzel", "Susan Homes", "Chan-Tell King-Beckwith", "Jason Leahy",
+            "Alison Maley", "Mat Marietta", "Rose McCarthy", "Julie Miener", 
+            "Kim Nehrt", "Arlin Peebles", "Daryl Peel", "Brian D. Schwartz", 
+            "Sydnee Sturdivant", "Meghan Tolson", "Scott Wilkinson", "Lynne Woodrum"
+        ];
+
+        // Sample data for development (remove this when Sheety API is set up)
+        const sampleWeeklyResults = [
+            { week: "Week 17", date: "2025-04-28", player: "Laura Adams", placement: 1 },
+            { week: "Week 17", date: "2025-04-28", player: "Beth Broyles", placement: 2 },
+            { week: "Week 17", date: "2025-04-28", player: "Pam Burdine", placement: 3 },
+            { week: "Week 17", date: "2025-04-28", player: "Adam Geisen", placement: 4 },
+            { week: "Week 17", date: "2025-04-28", player: "Mari Handy", placement: 5 },
+            { week: "Week 17", date: "2025-04-28", player: "Dave Heinzel", placement: 6 },
+            { week: "Week 17", date: "2025-04-28", player: "Susan Homes", placement: 7 },
+            { week: "Week 17", date: "2025-04-28", player: "Chan-Tell King-Beckwith", placement: 8 },
+            { week: "Week 17", date: "2025-04-28", player: "Jason Leahy", placement: 9 },
+            { week: "Week 17", date: "2025-04-28", player: "Alison Maley", placement: 10 },
+            { week: "Week 17", date: "2025-04-28", player: "Mat Marietta", placement: 11 },
+            { week: "Week 17", date: "2025-04-28", player: "Rose McCarthy", placement: 12 },
+            { week: "Week 17", date: "2025-04-28", player: "Lynne Woodrum", placement: "DQ" },
+            { week: "Week 16", date: "2025-04-21", player: "Julie Miener", placement: 1 },
+            { week: "Week 16", date: "2025-04-21", player: "Kim Nehrt", placement: 2 },
+            { week: "Week 16", date: "2025-04-21", player: "Arlin Peebles", placement: 3 },
+            { week: "Week 16", date: "2025-04-21", player: "Daryl Peel", placement: 4 },
+            { week: "Week 16", date: "2025-04-21", player: "Brian D. Schwartz", placement: 5 },
+            { week: "Week 16", date: "2025-04-21", player: "Sydnee Sturdivant", placement: 6 },
+            { week: "Week 16", date: "2025-04-21", player: "Meghan Tolson", placement: 7 },
+            { week: "Week 16", date: "2025-04-21", player: "Scott Wilkinson", placement: 8 },
+            { week: "Week 16", date: "2025-04-21", player: "Laura Adams", placement: 9 },
+            { week: "Week 16", date: "2025-04-21", player: "Beth Broyles", placement: "DQ" },
+            { week: "Week 15", date: "2025-04-14", player: "Pam Burdine", placement: 1 },
+            { week: "Week 15", date: "2025-04-14", player: "Adam Geisen", placement: 2 },
+            { week: "Week 15", date: "2025-04-14", player: "Mari Handy", placement: 3 },
+            { week: "Week 15", date: "2025-04-14", player: "Dave Heinzel", placement: 4 },
+            { week: "Week 15", date: "2025-04-14", player: "Susan Homes", placement: 5 },
+            { week: "Week 15", date: "2025-04-14", player: "Chan-Tell King-Beckwith", placement: 6 },
+            { week: "Week 15", date: "2025-04-14", player: "Jason Leahy", placement: 7 },
+            { week: "Week 15", date: "2025-04-14", player: "Alison Maley", placement: 8 },
+            { week: "Week 15", date: "2025-04-14", player: "Mat Marietta", placement: "DQ" }
+        ];
+        
+        // Data storage
+        let weeklyResults = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial data load
+            fetchData();
+            
+            // Set up auto-refresh
+            setInterval(fetchData, config.refreshInterval);
+        });
+        
+        // Fetch data from API or use sample data
+        async function fetchData() {
+            try {
+                // Show loading state
+                document.getElementById('playerTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading leaderboard data...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('weeklyResultsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading weekly results...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // In a real application, you would uncomment this section and remove the sample data
+                /*
+                // Fetch weekly results data from Sheety
+                const weeklyResultsResponse = await fetch(config.weeklyResultsApiUrl);
+                if (!weeklyResultsResponse.ok) {
+                    throw new Error('Failed to fetch weekly results data');
+                }
+                const weeklyResultsData = await weeklyResultsResponse.json();
+                weeklyResults = weeklyResultsData.weeklyResults;
+                */
+                
+                // Using sample data for demo - remove this when API is connected
+                weeklyResults = sampleWeeklyResults;
+                
+                // Calculate player standings based on weekly results
+                const playerStandings = calculateStandings(weeklyResults);
+                
+                // Update UI with the data
+                populateLeaderboard(playerStandings);
+                populateWeeklyResults(weeklyResults);
+                
+                // Update the timestamp
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError();
+            }
+        }
+        
+        // Calculate player standings from weekly results
+        function calculateStandings(results) {
+            // Track points per player
+            const playerPoints = {};
+            const playerWeeklyPlacement = {};
+            
+            // Group results by week
+            const groupedByWeek = {};
+            results.forEach(result => {
+                if (!groupedByWeek[result.week]) {
+                    groupedByWeek[result.week] = [];
+                }
+                groupedByWeek[result.week].push(result);
+            });
+            
+            // Process each week's results
+            Object.keys(groupedByWeek).forEach(week => {
+                const weekResults = groupedByWeek[week];
+                
+                // Process player placements and points for this week
+                weekResults.forEach(result => {
+                    const player = result.player;
+                    const placement = result.placement;
+                    
+                    // Initialize player records if needed
+                    if (!playerPoints[player]) {
+                        playerPoints[player] = 0;
+                        playerWeeklyPlacement[player] = [];
+                    }
+                    
+                    // Calculate points based on placement
+                    let points = 0;
+                    if (placement === "DQ") {
+                        points = pointsSystem['DQ']; // Disqualified
+                    } else if (placement <= 10) {
+                        points = pointsSystem[placement];
+                    } else {
+                        points = pointsSystem[11]; // 11th place or lower
+                    }
+                    
+                    // Add points and record placement
+                    playerPoints[player] += points;
+                    playerWeeklyPlacement[player].push({
+                        week: result.week,
+                        placement: placement,
+                        points: points
+                    });
+                });
+            });
+            
+            // Convert to array for sorting
+            const standings = Object.keys(playerPoints).map(player => ({
+                name: player,
+                totalPoints: playerPoints[player],
+                placements: playerWeeklyPlacement[player].sort((a, b) => {
+                    // Sort placements by week (newest first)
+                    const weekA = a.week.replace('Week ', '');
+                    const weekB = b.week.replace('Week ', '');
+                    return parseInt(weekB) - parseInt(weekA);
+                })
+            }));
+            
+            // Sort by total points (highest first)
+            return standings.sort((a, b) => b.totalPoints - a.totalPoints);
+        }
+        
+        // Show error message
+        function showError() {
+            const errorMessage = `
+                <tr>
+                    <td colspan="4" class="error">
+                        <p>Error loading data. Please try again later.</p>
+                    </td>
+                </tr>
+            `;
+            
+            document.getElementById('playerTableBody').innerHTML = errorMessage;
+            document.getElementById('weeklyResultsTableBody').innerHTML = errorMessage;
+        }
+        
+        // Format placement for display
+        function formatPlacement(placement) {
+            if (placement === "DQ") {
+                return "DQ";
+            }
+            
+            // Return just the number for the vertical bar format
+            return placement;
+        }
+        
+        // Table Population
+        function populateLeaderboard(standings) {
+            const tableBody = document.getElementById('playerTableBody');
+            tableBody.innerHTML = '';
+            
+            if (standings.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No players recorded yet</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            standings.forEach((player, index) => {
+                const row = document.createElement('tr');
+                
+                // Apply top player styling
+                if (index < 3) {
+                    row.classList.add('top-player');
+                }
+                
+                // Create placement string with vertical bars using the format: 3 | 1 | 2 | 5 |
+                let placementStr = '<span class="weekly-placements">';
+                player.placements.forEach((p, i) => {
+                    // Add each placement with appropriate styling
+                    let placementClass = '';
+                    
+                    if (p.placement === "DQ") {
+                        placementClass = 'disqualified';
+                    } else if (p.placement === 1) {
+                        placementClass = 'first-place';
+                    } else if (p.placement === 2) {
+                        placementClass = 'second-place';
+                    } else if (p.placement === 3) {
+                        placementClass = 'third-place';
+                    }
+                    
+                    placementStr += `<span class="${placementClass}" title="${p.week}">${formatPlacement(p.placement)}</span>`;
+                    
+                    // Add separator if not last item
+                    if (i < player.placements.length - 1) {
+                        placementStr += ' | ';
+                    }
+                });
+                placementStr += '</span>';
+                
+                row.innerHTML = `
+                    <td class="rank">
+                        ${index === 0 ? '<span class="medal gold">1</span>' : 
+                          index === 1 ? '<span class="medal silver">2</span>' : 
+                          index === 2 ? '<span class="medal bronze">3</span>' : index + 1}
+                    </td>
+                    <td class="name">${player.name}</td>
+                    <td class="points">${player.totalPoints}</td>
+                    <td>${placementStr}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function populateWeeklyResults(results) {
+            // Group results by week
+            const groupedByWeek = {};
+            results.forEach(result => {
+                if (!groupedByWeek[result.week]) {
+                    groupedByWeek[result.week] = [];
+                }
+                groupedByWeek[result.week].push(result);
+            });
+            
+            // Sort weeks (newest first)
+            const sortedWeeks = Object.keys(groupedByWeek).sort().reverse();
+            
+            // Sort players within each week by placement
+            sortedWeeks.forEach(week => {
+                groupedByWeek[week].sort((a, b) => {
+                    // DQ comes after numbered placements
+                    if (a.placement === "DQ" && b.placement !== "DQ") return 1;
+                    if (a.placement !== "DQ" && b.placement === "DQ") return -1;
+                    // Otherwise sort by placement number
+                    return a.placement - b.placement;
+                });
+            });
+            
+            const tableBody = document.getElementById('weeklyResultsTableBody');
+            tableBody.innerHTML = '';
+            
+            if (sortedWeeks.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No weekly results recorded yet</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Add rows for each week
+            sortedWeeks.forEach(week => {
+                const weekResults = groupedByWeek[week];
+                
+                // Add a divider row for the week
+                const weekHeaderRow = document.createElement('tr');
+                weekHeaderRow.classList.add('week-highlight');
+                weekHeaderRow.innerHTML = `
+                    <td colspan="4" style="text-align: center; background-color: #e6f7ff; font-weight: bold;">
+                        ${week} (${weekResults[0].date})
+                    </td>
+                `;
+                tableBody.appendChild(weekHeaderRow);
+                
+                // Add rows for each player in that week
+                weekResults.forEach((result, index) => {
+                    const row = document.createElement('tr');
+                    
+                    // Highlight weekly winner
+                    if (result.placement === 1) {
+                        row.classList.add('weekly-winner');
+                    }
+                    
+                    // Style disqualified players
+                    if (result.placement === "DQ") {
+                        row.classList.add('disqualified');
+                    }
+                    
+                    // Calculate points
+                    let points = 0;
+                    if (result.placement === "DQ") {
+                        points = pointsSystem['DQ']; // Disqualified
+                    } else if (result.placement <= 10) {
+                        points = pointsSystem[result.placement];
+                    } else {
+                        points = pointsSystem[11]; // 11th place or lower
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${week}</td>
+                        <td>${result.player}</td>
+                        <td class="placement">${result.placement === "DQ" ? "DQ" : result.placement}</td>
+                        <td class="points">${points}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
