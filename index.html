@@ -285,7 +285,7 @@
         // Configuration - replace these with your own Sheety API URLs
         const config = {
             // Replace these with your own Sheety API URLs after setting up your spreadsheet
-            weeklyResultsApiUrl: 'https://api.sheety.co/421ea0f34197af43f9c53150d5dbf197/hallBallLeaderboard/weeklyResults',
+            weeklyResultsApiUrl: 'https://api.sheety.co/yoursheetyid/hallballleaderboard/weeklyResults',
             
             // Refresh interval in milliseconds (5 minutes)
             refreshInterval: 5 * 60 * 1000
@@ -390,7 +390,7 @@
                 weeklyResults = sampleWeeklyResults;
                 
                 // For when you're ready to use Sheety API:
-                
+                /*
                 try {
                     // Fetch weekly results data from Sheety
                     const weeklyResultsResponse = await fetch(config.weeklyResultsApiUrl);
@@ -403,7 +403,7 @@
                     console.warn('API fetch failed, using sample data instead', apiError);
                     weeklyResults = sampleWeeklyResults;
                 }
-                
+                */
                 
                 // Calculate player standings based on weekly results
                 const playerStandings = calculateStandings(weeklyResults);
@@ -535,27 +535,33 @@
                 
                 // Create placement string with vertical bars using the format: 3 | 1 | 2 | 5 |
                 let placementStr = '<span class="weekly-placements">';
-                player.placements.forEach((p, i) => {
-                    // Add each placement with appropriate styling
-                    let placementClass = '';
-                    
-                    if (p.placement === "DQ") {
-                        placementClass = 'disqualified';
-                    } else if (p.placement === 1) {
-                        placementClass = 'first-place';
-                    } else if (p.placement === 2) {
-                        placementClass = 'second-place';
-                    } else if (p.placement === 3) {
-                        placementClass = 'third-place';
-                    }
-                    
-                    placementStr += `<span class="${placementClass}" title="${p.week}">${formatPlacement(p.placement)}</span>`;
-                    
-                    // Add separator if not last item
-                    if (i < player.placements.length - 1) {
-                        placementStr += ' | ';
-                    }
-                });
+                
+                // Check if player has any placements
+                if (!player.placements || player.placements.length === 0) {
+                    placementStr += 'N/A';
+                } else {
+                    player.placements.forEach((p, i) => {
+                        // Add each placement with appropriate styling
+                        let placementClass = '';
+                        
+                        if (p.placement === "DQ") {
+                            placementClass = 'disqualified';
+                        } else if (p.placement === 1) {
+                            placementClass = 'first-place';
+                        } else if (p.placement === 2) {
+                            placementClass = 'second-place';
+                        } else if (p.placement === 3) {
+                            placementClass = 'third-place';
+                        }
+                        
+                        placementStr += `<span class="${placementClass}" title="${p.week}">${formatPlacement(p.placement)}</span>`;
+                        
+                        // Add separator if not last item
+                        if (i < player.placements.length - 1) {
+                            placementStr += ' | ';
+                        }
+                    });
+                }
                 placementStr += '</span>';
                 
                 row.innerHTML = `
@@ -616,9 +622,16 @@
                 // Add a divider row for the week
                 const weekHeaderRow = document.createElement('tr');
                 weekHeaderRow.classList.add('week-highlight');
+                
+                // Check if date exists and is valid before displaying it
+                let dateDisplay = '';
+                if (weekResults[0] && weekResults[0].date) {
+                    dateDisplay = `(${weekResults[0].date})`;
+                }
+                
                 weekHeaderRow.innerHTML = `
                     <td colspan="4" style="text-align: center; background-color: #e6f7ff; font-weight: bold;">
-                        ${week} (${weekResults[0].date})
+                        ${week} ${dateDisplay}
                     </td>
                 `;
                 tableBody.appendChild(weekHeaderRow);
